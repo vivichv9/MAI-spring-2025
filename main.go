@@ -167,9 +167,10 @@ func main() {
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
-	dsn := fmt.Sprintf("postgres", "host=localhost port=5432 user=%s "+
+	dsn := fmt.Sprintf("host=postgres	 port=5432 user=%s "+
 		"dbname=%s password=%s sslmode=disable search_path=auth", dbUser, dbName, dbPassword)
-	db, err = gorm.Open(dsn)
+	fmt.Println(dsn)
+	db, err = gorm.Open("postgres", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -181,8 +182,8 @@ func main() {
 	r.POST("/login", login)
 
 	r.GET("/profile", authMiddleware, func(c *gin.Context) {
-		userID := c.MustGet("user_id").(uint)
-		c.JSON(200, gin.H{"message": fmt.Sprintf("Welcome, user %d", userID)})
+		userID := c.MustGet("user_id")
+		c.JSON(200, gin.H{"message": fmt.Sprintf("Welcome, user %v", userID)})
 	})
 
 	r.Run(":8080")

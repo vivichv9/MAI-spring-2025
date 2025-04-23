@@ -6,7 +6,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # Скачиваем зависимости
-RUN go mod tidy
+RUN go mod download
 
 # Копируем весь код
 COPY . .
@@ -14,9 +14,9 @@ COPY . .
 # Собираем приложение
 RUN go build -o main .
 
-RUN ls 
+RUN ls
 # Открываем порт
 EXPOSE 8080
 
 # Запускаем приложение
-CMD ["./main"]
+CMD ["/app/main"]
