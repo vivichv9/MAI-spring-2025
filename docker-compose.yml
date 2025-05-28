@@ -1,6 +1,8 @@
 services:
     postgres:
-      image: postgres:13
+      build:
+        context: .
+        dockerfile: Dockerfile-pg
       restart: unless-stopped
       container_name: postgres
       hostname: postgres
