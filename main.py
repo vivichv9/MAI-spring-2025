@@ -1,22 +1,31 @@
 import fastapi
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import json
 from db import Database
 import httpx
 import jwt
 import uvicorn
-
+from dotenv import load_dotenv
+from crypt import *
+import os
+load_dotenv()
 
 
 PRODUCTS_SERVICE_URL = "http://127.0.0.1:8001"
 app = FastAPI()
+db_params = {
+"host": os.getenv("POSTGRES_HOST"),
+    "port": int(os.getenv("POSTGRES_PORT")),
+    "dbname": os.getenv("POSTGRES_DB"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD")
+}
 
-with open("./params.json", "r") as file:
-    db_params = json.load(file)
+
 db = Database(db_params)
-
-SECRET_KEY = "my_secret"
+SECRET_KEY = os.getenv("SECRET_KEY")
 auth_scheme = HTTPBearer()
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
     token = credentials.credentials
@@ -28,7 +37,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-@app.get("/cart/{user_id}")
+@app.get("/cart")
 async def get_cart(user_data = Depends(verify_token)):
     user_id = user_data["user_id"]
     product_ids = db.get_cart(user_id)
@@ -47,10 +56,20 @@ async def get_cart(user_data = Depends(verify_token)):
     return {"products": products_info}
 
 
-@app.get("/purchases/{user_id}")
-async def get_purchases(user_data = Depends(verify_token)):
+@app.get("/change_password")
+async def change_password(user_data = Depends(verify_token)):
     user_id = user_data["user_id"]
-    product_ids = db.get_purchases(user_id)
+    new_pass = user_data["new_password"]
+    res =  db.change_password(user_id,hash_password(new_pass))
+    if res:
+        return JSONResponse("",status_code=200)
+    else:
+        return JSONResponse("",status_code=401)
+
+@app.get("/get_orders")
+async def get_orders(req_data = Depends(verify_token)):
+    user_id = req_data["user_id"]
+    product_ids = db.get_orders(user_id)
 
     if not product_ids:
         return {"products": []}
@@ -64,7 +83,6 @@ async def get_purchases(user_data = Depends(verify_token)):
 
     products_info = response.json()
     return {"products": products_info}
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
