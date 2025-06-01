@@ -13,11 +13,11 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     "is_active" BOOLEAN,
     "is_superuser" BOOLEAN,
     "is_verified" BOOLEAN,
-    "updated_at" timestamp
+    "updated_at" timestamp DEFAULT NOW()
     );
 
     CREATE TABLE "user_credentials" (
-    "user_id" int PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "password_hash" text,
     is_active BOOLEAN,
     is_superuser BOOLEAN,
@@ -25,7 +25,7 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     );
 
     CREATE TABLE "tokens" (
-    "user_id" INT PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "token_hash" VARCHAR(100),
     "expiry_date" timestamp,
     "revoked" BOOLEAN,
@@ -34,7 +34,7 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
 
     CREATE TABLE "user_logins" (
     "log_id" serial PRIMARY KEY,
-    "user_id" int,
+    "user_id" UUID,
     "login_dttm" timestamp,
     "ip_address" INET,
     "user_agent" TEXT,
@@ -43,13 +43,13 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     );
 
     CREATE TABLE "carts" (
-    "user_id" int PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "product_ids" integer[]
     );
 
     CREATE TABLE "products" (
     "product_id" int PRIMARY KEY,
-    "price" money,
+    "price" NUMERIC(12, 2),
     "weight" float,
     "description" text,
     "name" text,
@@ -73,7 +73,7 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
 
     CREATE TABLE "orders" (
     "order_id" serial PRIMARY KEY,
-    "user_id" int,
+    "user_id" UUID,
     "product_ids" integer[],
     "product_costs" integer[],
     "order_dttm" timestamp,
@@ -82,17 +82,17 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     );
 
     CREATE TABLE "user_favorites" (
-    "user_id" int PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "favorites_ids" integer[]
     );
 
     CREATE TABLE "premium_users" (
-    "user_id" int PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "personal_discount" int
     );
 
     CREATE TABLE "user_balances" (
-    "user_id" int,
+    "user_id" UUID,
     "balance" money,
     "valid_from" timestamp,
     "valid_to" timestamp,
@@ -100,7 +100,7 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     );
 
     CREATE TABLE "user_payments" (
-    "user_id" int PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "payment_dttm" timestamp,
     "payment_amount" money
     );

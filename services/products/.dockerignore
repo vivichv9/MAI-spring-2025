@@ -4,8 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 .env.template
-*.env
-.env.*
 venv/
 .git
 .gitignore

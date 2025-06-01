@@ -8,7 +8,11 @@ filebeat.inputs:
   id: project-logs
   enabled: true
   paths:
-    - /var/log/project/projects.log
+    - /var/log/project/auth/*.txt
+    - /var/log/project/products/*.txt
+    - /var/log/project/orders/*.txt
+    - /var/log/project/finance/*.txt    
+    - /var/log/project/personal_account/*.txt    
   close.on_state_change.inactive: 5m
   close.inactive: 5m
   clean_removed: true

@@ -87,7 +87,7 @@ if __name__ == "__main__":
             verify_certs=False
         )
         
-        for i in range(10000):
+        for i in range(1):
             time.sleep(random.random())
             sample_log = {
                 "level": "INFO",

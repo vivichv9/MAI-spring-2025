@@ -45,9 +45,9 @@ class RedisSettings(BaseSettings):
     @property
     def redis_url(self):
         if self.redis_password:
-            return f"redis://:{self.redis_password.get_secret_value()}@{self.redis_host}:{self.redis_port}/{self.redis_db}"
+            return f"redis://redis:6379/1"
         else:
-            return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+            return f"redis://redis:6379/1"
 
 
 class Settings(BaseSettings):

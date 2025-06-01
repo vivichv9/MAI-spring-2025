@@ -1,5 +1,5 @@
 from core.logger import setup_logging
-setup_logging(log_file_path="/tmp/logs/logs.txt", service_name="shop-app")
+setup_logging(log_file_path="/tmp/logs/logs.txt", service_name="auth")
 
 from celery import Celery
 from core.settings import settings

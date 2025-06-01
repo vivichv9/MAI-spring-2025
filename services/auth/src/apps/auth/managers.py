@@ -28,6 +28,7 @@ class UserManager:
             await session.commit()
 
             user_data = result.scalar_one()
+            print(user_data.__dict__)
             return UserReturnData(**user_data.__dict__)
 
     async def confirm_user(self, email: str) -> None:
