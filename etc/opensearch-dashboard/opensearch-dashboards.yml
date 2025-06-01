@@ -1,0 +1,18 @@
+server.name: os_dashboards
+server.host: "0.0.0.0"
+
+opensearch.hosts: ["http://opensearch:9200"]
+opensearch.username: "admin"
+opensearch.password: "OlfbVWQ_FvzhKRsYsVBW%bL9N_fi%%_B"
+opensearch_security.enabled: true
+
+# Encrypt traffic between the browser and OpenSearch-Dashboards
+# plugins.security.ssl.http.enabled: false
+# plugins.security.disabled: true
+server.ssl.enabled: false
+# server.ssl.certificate: "/usr/share/opensearch-dashboards/config/certificates/os-dashboards/os-dashboards.pem"
+# server.ssl.key: "/usr/share/opensearch-dashboards/config/certificates/os-dashboards/os-dashboards.key"
+
+# Encrypt traffic between OpenSearch-Dashboards and Opensearch
+# opensearch.ssl.certificateAuthorities: ["/usr/share/opensearch-dashboards/config/certificates/ca/ca.pem"]
+# opensearch.ssl.verificationMode: full

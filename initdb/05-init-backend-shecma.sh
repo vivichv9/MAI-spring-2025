@@ -8,12 +8,20 @@ psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     "last_name" text,
     "age" int,
     "email" text,
-    "registration_dttm" timestamp
+    "registration_dttm" timestamp,
+    "password_hash" text,
+    "is_active" BOOLEAN,
+    "is_superuser" BOOLEAN,
+    "is_verified" BOOLEAN,
+    "updated_at" timestamp
     );
 
     CREATE TABLE "user_credentials" (
     "user_id" int PRIMARY KEY,
-    "password_hash" text
+    "password_hash" text,
+    is_active BOOLEAN,
+    is_superuser BOOLEAN,
+    is_verified BOOLEAN 
     );
 
     CREATE TABLE "tokens" (
