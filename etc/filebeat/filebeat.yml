@@ -1,0 +1,37 @@
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: true
+  reload.period: 10s
+
+filebeat.inputs:
+- type: filestream
+  id: project-logs
+  enabled: true
+  paths:
+    - /var/log/project/projects.log
+  close.on_state_change.inactive: 5m
+  close.inactive: 5m
+  clean_removed: true
+  ignore_older: 24h
+  scan_frequency: 10s
+  harvester_buffer_size: 16384
+  parsers:
+    - ndjson:
+        target: ""
+        add_error_key: true
+        
+output.kafka:
+  enabled: true
+  hosts: ["kafka:29092"]
+  topic: "project_logs"
+  codec.json:
+    pretty: false
+  required_acks: 1
+  compression: none
+  max_message_bytes: 1000000
+
+processors:
+- add_host_metadata:
+    when.not.contains.tags: forwarded
+- add_cloud_metadata: ~
+- add_docker_metadata: ~

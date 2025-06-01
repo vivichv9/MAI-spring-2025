@@ -1,0 +1,22 @@
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ./sources/filebeat-7.12.1-amd64.deb /
+
+# Устанавливаем пакет
+RUN dpkg -i /filebeat-7.12.1-amd64.deb && \
+    rm /filebeat-7.12.1-amd64.deb
+
+# Копируем конфиг и устанавливаем правильные права
+COPY ./etc/filebeat/filebeat.yml /etc/filebeat/filebeat.yml
+RUN chmod 600 /etc/filebeat/filebeat.yml && \
+    chown root:root /etc/filebeat/filebeat.yml
+
+RUN mkdir -p /etc/filebeat/modules.d && \
+    filebeat modules enable system --path.config /etc/filebeat && \
+    filebeat modules enable kafka --path.config /etc/filebeat
+
+CMD ["filebeat", "-e", "-c", "/etc/filebeat/filebeat.yml"]
