@@ -1,12 +1,16 @@
 from typing import Annotated
 
+import logging
+
 from fastapi import APIRouter, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
 from apps.auth.depends import get_current_user
-from apps.auth.schemas import AuthUser, UserReturnData, UserVerifySchema
+from apps.auth.schemas import AuthUser, UserReturnData, UserVerifySchema, UserInDB, LoginUser
 from apps.auth.services import UserService
+
+logger = logging.getLogger(__name__)
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -24,6 +28,10 @@ async def registration(
     user: AuthUser,
     service: UserService = Depends(UserService)
 ) -> UserReturnData:
+    logger.info(
+        "Попытка регистрации нового пользователя",
+        extra={"custom_field": f"register:{user.email}"}
+    )
     return await service.register_user(user=user)
 
 @auth_router.get(path="/logout", status_code=status.HTTP_200_OK)
@@ -31,6 +39,10 @@ async def logout(
     user: Annotated[UserVerifySchema, Depends(get_current_user)],
     service: UserService = Depends(UserService),
 ) -> JSONResponse:
+    logger.info(
+        "Пользователь вышел из системы",
+        extra={"custom_field": f"logout:{user.user_id}"}
+    )
     return await service.logout_user(user=user)
 
 @auth_router.get(path="/register_confirm", status_code=status.HTTP_200_OK)
@@ -39,5 +51,5 @@ async def confirm_registration(token: str, service: UserService = Depends(UserSe
     return {"message": "Электронная почта подтверждена"}
 
 @auth_router.post(path="/login", status_code=status.HTTP_200_OK)
-async def login(user: AuthUser, service: UserService = Depends(UserService)) -> JSONResponse:
+async def login(user: LoginUser, service: UserService = Depends(UserService)) -> JSONResponse:
     return await service.login_user(user=user)

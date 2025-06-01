@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class CreatedAtMixin:
-    created_at: Mapped[datetime.datetime] = mapped_column(
+    registration_dttm: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         default=datetime.datetime.now,

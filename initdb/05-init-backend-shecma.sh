@@ -3,7 +3,7 @@ set -e
 
 psql -v ON_ERROR_STOP=1 --username "backend" --dbname "backend" <<-EOSQL
     CREATE TABLE "users" (
-    "user_id" serial PRIMARY KEY,
+    "user_id" UUID PRIMARY KEY,
     "first_name" text,
     "last_name" text,
     "age" int,

@@ -1,11 +1,11 @@
 import uuid
 import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, conint
 
 
 class GetUserByID(BaseModel):
-    id: uuid.UUID | str
+    user_id: uuid.UUID | str
 
 
 class GetUserByEmail(BaseModel):
@@ -14,20 +14,35 @@ class GetUserByEmail(BaseModel):
 
 class AuthUser(GetUserByEmail):
     password: str
+    first_name: str
+    last_name: str
+    age: int
 
+class LoginUser(GetUserByEmail):
+    password: str
+
+class UserInDB(GetUserByEmail):
+    password_hash: str
 
 class CreateUser(GetUserByEmail):
-    hashed_password: str
+    password_hash: str
+    first_name: str
+    last_name: str
+    age: int
 
 
 class UserReturnData(GetUserByID, GetUserByEmail):
+    first_name: str
+    last_name: str
+    age: int
+
     is_active: bool
     is_verified: bool
     is_superuser: bool
-    created_at: datetime.datetime
+    registration_dttm: datetime.datetime
     updated_at: datetime.datetime
 
-class GetUserWithIDAndEmail(GetUserByID, CreateUser):
+class GetUserWithIDAndEmail(GetUserByID, UserInDB):
     pass
 
 class UserVerifySchema(GetUserByID, GetUserByEmail):

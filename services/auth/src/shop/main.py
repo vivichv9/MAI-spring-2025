@@ -1,7 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
+from core.logger import setup_logging
 
 from apps import apps_router
+setup_logging(log_file_path="/tmp/logs/logs.txt", service_name="shop-app")
 
 app = FastAPI()
 

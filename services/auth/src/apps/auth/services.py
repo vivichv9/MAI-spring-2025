@@ -1,10 +1,11 @@
 from fastapi import Depends, HTTPException
 from itsdangerous import URLSafeTimedSerializer, BadSignature
+from starlette import status
 from starlette.responses import JSONResponse
 
 from apps.auth.handlers import AuthHandler
 from apps.auth.managers import UserManager
-from apps.auth.schemas import AuthUser, UserReturnData, CreateUser, UserVerifySchema
+from apps.auth.schemas import AuthUser, UserReturnData, CreateUser, UserVerifySchema, UserInDB, LoginUser
 from core.settings import settings
 from apps.auth.tasks import send_confirmation_email
 
@@ -18,7 +19,13 @@ class UserService:
     async def register_user(self, user: AuthUser) -> UserReturnData:
         hashed_password = await self.handler.get_password_hash(user.password)
 
-        new_user = CreateUser(email=user.email, hashed_password=hashed_password)
+        new_user = CreateUser(
+            email=user.email,
+            password_hash=hashed_password,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            age=user.age
+        )
 
         user_data = await self.manager.create_user(user=new_user)
 
@@ -37,11 +44,11 @@ class UserService:
 
         await self.manager.confirm_user(email=email)
 
-    async def login_user(self, user: AuthUser) -> JSONResponse:
+    async def login_user(self, user: LoginUser) -> JSONResponse:
         exist_user = await self.manager.get_user_by_email(email=user.email)
 
         if exist_user is None or not await self.handler.verify_password(
-                hashed_password=exist_user.hashed_password,
+                hashed_password=exist_user.password_hash,
                 raw_password=user.password
         ):
             raise HTTPException(
@@ -49,11 +56,11 @@ class UserService:
                 detail="Wrong email or password"
             )
 
-        token, session_id = await self.handler.create_access_token(user_id=exist_user.id)
+        token, session_id = await self.handler.create_access_token(user_id=exist_user.user_id)
 
         await self.manager.store_access_token(
             token=token,
-            user_id=exist_user.id,
+            user_id=exist_user.user_id,
             session_id=session_id
         )
 
@@ -68,7 +75,7 @@ class UserService:
         return response
 
     async def logout_user(self, user: UserVerifySchema) -> JSONResponse:
-        await self.manager.revoke_access_token(user_id=user.id, session_id=user.session_id)
+        await self.manager.revoke_access_token(user_id=user.user_id, session_id=user.session_id)
 
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie(key="Authorization")

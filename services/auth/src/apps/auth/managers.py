@@ -7,11 +7,11 @@ from sqlalchemy.exc import IntegrityError
 from apps.auth.schemas import CreateUser, UserReturnData, GetUserWithIDAndEmail, UserVerifySchema
 from core.core_dependency.db_dependency import DBDependency
 from core.core_dependency.redis_dependency import RedisDependency
-from database.models import User
+from database.models import Users
 
 
 class UserManager:
-    def __init__(self, model: type[User] = User,db: DBDependency = Depends(DBDependency), redis: RedisDependency = Depends(RedisDependency)) -> None:
+    def __init__(self, model: type[Users] = Users,db: DBDependency = Depends(DBDependency), redis: RedisDependency = Depends(RedisDependency)) -> None:
         self.db = db
         self.model = model
         self.redis = redis
@@ -43,9 +43,9 @@ class UserManager:
     async def get_user_by_email(self, email: str) -> GetUserWithIDAndEmail | None:
         async with self.db.db_session() as session:
             query = select(
-                self.model.id,
+                self.model.user_id,
                 self.model.email,
-                self.model.hashed_password
+                self.model.password_hash
             ).where(self.model.email == email)
 
             result = await session.execute(query)
@@ -66,7 +66,7 @@ class UserManager:
 
     async def get_user_by_id(self, user_id: uuid.UUID | str) -> UserVerifySchema | None:
         async with self.db.db_session() as session:
-            query = select(self.model.id, self.model.email).where(self.model.id ==
+            query = select(self.model.user_id, self.model.email).where(self.model.user_id ==
             user_id)
 
             result = await session.execute(query)
