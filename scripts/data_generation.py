@@ -26,30 +26,34 @@ fake = Faker()
 
 def generate_pickup_points(n):
     return [
-        (i, {"street": fake.street_address(), "city": fake.city(), "zip": fake.postcode()},
+        (i, json.dumps({"street": fake.street_address(), "city": fake.city(), "zip": fake.postcode()}),
          f"POINT({random.uniform(-180, 180)} {random.uniform(-90, 90)})")
         for i in range(1, n + 1)
     ]
 
 def generate_products(n):
     return [
-        (i, round(random.uniform(10, 1000), 2), round(random.uniform(0.1, 50), 2),
-         fake.text(max_nb_chars=200), ' '.join(fake.words(nb=2)).title(),
-         round(random.uniform(0, 0.5), 2), random.randint(1, 100))
+        (i, round(random.uniform(10, 1000), 2), 
+         round(random.uniform(0.1, 50), 2),
+         fake.text(max_nb_chars=200), 
+         ' '.join(fake.words(nb=2)).title(),
+         round(random.uniform(0, 0.5), 2), 
+         random.randint(1, 100))
         for i in range(1, n + 1)
     ]
 
 def generate_users(n):
     return [
-        (i, fake.first_name(), fake.last_name(), random.randint(18, 70), fake.email(),
-         fake.date_time_between(start_date="-5y", end_date="now"))
-        for i in range(1, n + 1)
+        (str(uuid.uuid4()), fake.first_name(), fake.last_name(), random.randint(18, 70), fake.email(),
+         fake.date_time_between(start_date="-5y", end_date="now"), fake.password(length=12),
+         random.choice([True, False]), random.choice([True, False]), random.choice([True, False]))
+        for _ in range(n)
     ]
 
 def insert_pickup_points(data):
     cur.executemany(
         "INSERT INTO pickup_points (pickup_id, address, location) VALUES (%s, %s, ST_GeographyFromText(%s))",
-        [(pid, json.dumps(addr), loc) for pid, addr, loc in data]
+        data
     )
     conn.commit()
 
@@ -62,13 +66,14 @@ def insert_products(data):
 
 def insert_users(data):
     cur.executemany(
-        "INSERT INTO users (user_id, first_name, last_name, age, email, registration_dttm) VALUES (%s, %s, %s, %s, %s, %s)",
+        """INSERT INTO users (user_id, first_name, last_name, age, email, registration_dttm, password_hash, 
+           is_active, is_superuser, is_verified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         data
     )
     conn.commit()
 
 def generate_user_credentials(user_ids):
-    return [(uid, fake.password(length=12)) for uid in user_ids]
+    return [(uid, fake.password(length=12), True, False, False) for uid in user_ids]
 
 def generate_tokens(user_ids):
     return [(uid, str(uuid.uuid4()), fake.date_time_between(start_date="+1d", end_date="+1y"), random.choice([True, False])) for uid in user_ids]
@@ -105,7 +110,7 @@ def generate_orders(user_ids, product_ids, pickup_ids):
             product_count = random.randint(1, 10)
             products = random.sample(product_ids, product_count)
             data.append((
-                uid, products, [random.randint(100, 1000) for _ in products],
+                uid, products, [round(random.uniform(10, 1000), 2) for _ in products],
                 fake.date_time_between(start_date="-3y", end_date="now"),
                 random.choice(pickup_ids), random.choice(["standard", "express", "pickup"])
             ))
@@ -120,11 +125,12 @@ def generate_premium_users(user_ids, probability=0.3):
 def generate_user_balances(user_ids, per_user):
     data = []
     for uid in user_ids:
-        start_date = fake.date_between(start_date="-2y", end_date="today")
+        start_date = fake.date_time_between(start_date="-2y", end_date="now")
         for _ in range(per_user):
             valid_from = start_date + timedelta(days=random.randint(1, 30))
             data.append((
-                uid, round(random.uniform(0, 10000), 2), valid_from,
+                uid, round(random.uniform(0, 10000), 2), 
+                valid_from,
                 valid_from + timedelta(days=365)
             ))
     return data
@@ -152,52 +158,62 @@ try:
     user_ids = [row[0] for row in users_data]
 
     print("Вставка user_credentials...")
-    cur.executemany("INSERT INTO user_credentials (user_id, password_hash) VALUES (%s, %s)", 
+    cur.executemany("""INSERT INTO user_credentials (user_id, password_hash, is_active, is_superuser, is_verified) 
+                    VALUES (%s, %s, %s, %s, %s)""", 
                     generate_user_credentials(user_ids))
     conn.commit()
 
     print("Вставка tokens...")
-    cur.executemany("INSERT INTO tokens (user_id, token_hash, expiry_date, revoked) VALUES (%s, %s, %s, %s)", 
+    cur.executemany("""INSERT INTO tokens (user_id, token_hash, expiry_date, revoked) 
+                    VALUES (%s, %s, %s, %s)""", 
                     generate_tokens(user_ids))
     conn.commit()
 
     print("Вставка user_logins...")
-    cur.executemany("INSERT INTO user_logins (user_id, login_dttm, ip_address, user_agent, login_status, failure_reason) VALUES (%s, %s, %s, %s, %s, %s)", 
+    cur.executemany("""INSERT INTO user_logins (user_id, login_dttm, ip_address, user_agent, login_status, failure_reason) 
+                    VALUES (%s, %s, %s, %s, %s, %s)""", 
                     generate_user_logins(user_ids, LOGINS_PER_USER))
     conn.commit()
 
     print("Вставка carts...")
-    cur.executemany("INSERT INTO carts (user_id, product_ids) VALUES (%s, %s)", 
+    cur.executemany("""INSERT INTO carts (user_id, product_ids) 
+                    VALUES (%s, %s)""", 
                     generate_carts(user_ids, product_ids))
     conn.commit()
 
     print("Вставка delivery_times...")
-    cur.executemany("INSERT INTO delivery_times (product_id, pickup_id, delivery_hours, is_express) VALUES (%s, %s, %s, %s)", 
+    cur.executemany("""INSERT INTO delivery_times (product_id, pickup_id, delivery_hours, is_express) 
+                    VALUES (%s, %s, %s, %s)""", 
                     generate_delivery_times(product_ids, pickup_ids, DELIVERY_TIMES_PER_PRODUCT))
     conn.commit()
 
     print("Вставка orders...")
-    cur.executemany("INSERT INTO orders (user_id, product_ids, product_costs, order_dttm, pickup_id, order_type) VALUES (%s, %s, %s, %s, %s, %s)", 
+    cur.executemany("""INSERT INTO orders (user_id, product_ids, product_costs, order_dttm, pickup_id, order_type) 
+                    VALUES (%s, %s, %s, %s, %s, %s)""", 
                     generate_orders(user_ids, product_ids, pickup_ids))
     conn.commit()
 
     print("Вставка user_favorites...")
-    cur.executemany("INSERT INTO user_favorites (user_id, favorites_ids) VALUES (%s, %s)", 
+    cur.executemany("""INSERT INTO user_favorites (user_id, favorites_ids) 
+                    VALUES (%s, %s)""", 
                     generate_user_favorites(user_ids, product_ids))
     conn.commit()
 
     print("Вставка premium_users...")
-    cur.executemany("INSERT INTO premium_users (user_id, personal_discount) VALUES (%s, %s)", 
+    cur.executemany("""INSERT INTO premium_users (user_id, personal_discount) 
+                    VALUES (%s, %s)""", 
                     generate_premium_users(user_ids))
     conn.commit()
 
     print("Вставка user_balances...")
-    cur.executemany("INSERT INTO user_balances (user_id, balance, valid_from, valid_to) VALUES (%s, %s, %s, %s)", 
+    cur.executemany("""INSERT INTO user_balances (user_id, balance, valid_from, valid_to) 
+                    VALUES (%s, %s, %s, %s)""", 
                     generate_user_balances(user_ids, BALANCES_PER_USER))
     conn.commit()
 
     print("Вставка user_payments...")
-    cur.executemany("INSERT INTO user_payments (user_id, payment_dttm, payment_amount) VALUES (%s, %s, %s)", 
+    cur.executemany("""INSERT INTO user_payments (user_id, payment_dttm, payment_amount) 
+                    VALUES (%s, %s, %s)""", 
                     generate_user_payments(user_ids))
     conn.commit()
 
@@ -205,6 +221,7 @@ try:
 
 except Exception as e:
     print(f"❌ Ошибка: {e}")
+    conn.rollback()
 finally:
     cur.close()
     conn.close()

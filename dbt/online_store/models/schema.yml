@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: public
+    # Убираем или делаем null, чтобы dbt не генерировал "db"."public"…
+    #database: "{{ env_var('POSTGRES_DB', 'db') }}"
+    database: null
+    schema: "public"
+    tables:
+      - name: users
+      - name: orders
+      - name: delivery_times
+      - name: premium_users
+      - name: products
+      - name: user_logins
