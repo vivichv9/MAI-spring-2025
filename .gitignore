@@ -23,5 +23,11 @@ go.work.sum
 
 # env file
 .env
+
 .venv
 .idea
+
+# data
+data
+
+
