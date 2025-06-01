@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from opensearchpy import OpenSearch, RequestsHttpConnection, NotFoundError
 import logging
-import sys
+import time
+import random
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -86,7 +87,8 @@ if __name__ == "__main__":
             verify_certs=False
         )
         
-        for i in range(1):
+        for i in range(10000):
+            time.sleep(random.random())
             sample_log = {
                 "level": "INFO",
                 "message": f"Это тестовая запись лога_{i}",

@@ -282,6 +282,19 @@ services:
         kafka:
           condition: service_healthy
 
+    filebeat:
+      build:
+        context: .
+        dockerfile: Dockerfile-filebeat
+      container_name: filebeat
+      hostname: filebeat
+      restart: always
+      volumes:
+        - ./logs/project:/var/log/project
+      depends_on:
+        - kafka
+
+      
 
 networks:
   trino-network:
