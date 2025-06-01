@@ -1,0 +1,13 @@
+# .dockerignore
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env.template
+*.env
+.env.*
+venv/
+.git
+.gitignore
+Dockerfile
+.dockerignore
