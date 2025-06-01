@@ -25,3 +25,8 @@ go.work.sum
 
 .venv
 .idea
+
+data
+
+logs
+.env
