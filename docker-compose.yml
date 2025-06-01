@@ -23,131 +23,131 @@ services:
       networks:
         - trino-network
 
-    # minio:
-    #   image: quay.io/minio/minio
-    #   container_name: minio
-    #   hostname: minio
-    #   env_file:
-    #     - .env
-    #   ports:
-    #     - 9000:9000
-    #     - 9001:9001
-    #   volumes:
-    #     - ./data/minio_data:/minio_data
-    #   command: server /minio_data --console-address ":9001"
-    #   networks:
-    #     - trino-network
+    minio:
+      image: quay.io/minio/minio
+      container_name: minio
+      hostname: minio
+      env_file:
+        - .env
+      ports:
+        - 9000:9000
+        - 9001:9001
+      volumes:
+        - ./data/minio_data:/minio_data
+      command: server /minio_data --console-address ":9001"
+      networks:
+        - trino-network
 
-    # hive-metastore:
-    #   image: starburstdata/hive:3.1.2-e.18
-    #   container_name: hive-metastore
-    #   hostname: hive-metastore
-    #   depends_on:
-    #     - postgres
-    #   ports:
-    #     - "9083:9083"
-    #   environment:
-    #     HIVE_METASTORE_DRIVER: org.postgresql.Driver 
-    #     HIVE_METASTORE_JDBC_URL: jdbc:postgresql://postgres:5432/${HIVE_DATABASE}
-    #     HIVE_METASTORE_USER: ${HIVE_USER}
-    #     HIVE_METASTORE_PASSWORD: ${HIVE_PASSWORD}
-    #     HIVE_METASTORE_WAREHOUSE_DIR: s3://hive/
-    #     S3_ENDPOINT: http://minio:9000/
-    #     S3_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-    #     S3_SECRET_KEY: ${MINIO_SECRET_KEY}
-    #     S3_PATH_STYLE_ACCESS: "true"
-    #     S3_ENDPOINT_SSL_ENABLED: "false"
-    #     HIVE_METASTORE_USERS_IN_ADMIN_ROLE: "admin"
-    #     REGION: ""
-    #     GOOGLE_CLOUD_KEY_FILE_PATH: ""
-    #     AZURE_ADL_CLIENT_ID: ""
-    #     AZURE_ADL_CREDENTIAL: ""
-    #     AZURE_ADL_REFRESH_URL: ""
-    #     AZURE_ABFS_STORAGE_ACCOUNT: ""
-    #     AZURE_ABFS_ACCESS_KEY: ""
-    #     AZURE_WASB_STORAGE_ACCOUNT: ""
-    #     AZURE_ABFS_OAUTH: ""
-    #     AZURE_ABFS_OAUTH_TOKEN_PROVIDER: ""
-    #     AZURE_ABFS_OAUTH_CLIENT_ID: ""
-    #     AZURE_ABFS_OAUTH_SECRET: ""
-    #     AZURE_ABFS_OAUTH_ENDPOINT: ""
-    #     AZURE_WASB_ACCESS_KEY: ""
-    #   networks:
-    #     - trino-network        
+    hive-metastore:
+      image: starburstdata/hive:3.1.2-e.18
+      container_name: hive-metastore
+      hostname: hive-metastore
+      depends_on:
+        - postgres
+      ports:
+        - "9083:9083"
+      environment:
+        HIVE_METASTORE_DRIVER: org.postgresql.Driver 
+        HIVE_METASTORE_JDBC_URL: jdbc:postgresql://postgres:5432/${HIVE_DATABASE}
+        HIVE_METASTORE_USER: ${HIVE_USER}
+        HIVE_METASTORE_PASSWORD: ${HIVE_PASSWORD}
+        HIVE_METASTORE_WAREHOUSE_DIR: s3://hive/
+        S3_ENDPOINT: http://minio:9000/
+        S3_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+        S3_SECRET_KEY: ${MINIO_SECRET_KEY}
+        S3_PATH_STYLE_ACCESS: "true"
+        S3_ENDPOINT_SSL_ENABLED: "false"
+        HIVE_METASTORE_USERS_IN_ADMIN_ROLE: "admin"
+        REGION: ""
+        GOOGLE_CLOUD_KEY_FILE_PATH: ""
+        AZURE_ADL_CLIENT_ID: ""
+        AZURE_ADL_CREDENTIAL: ""
+        AZURE_ADL_REFRESH_URL: ""
+        AZURE_ABFS_STORAGE_ACCOUNT: ""
+        AZURE_ABFS_ACCESS_KEY: ""
+        AZURE_WASB_STORAGE_ACCOUNT: ""
+        AZURE_ABFS_OAUTH: ""
+        AZURE_ABFS_OAUTH_TOKEN_PROVIDER: ""
+        AZURE_ABFS_OAUTH_CLIENT_ID: ""
+        AZURE_ABFS_OAUTH_SECRET: ""
+        AZURE_ABFS_OAUTH_ENDPOINT: ""
+        AZURE_WASB_ACCESS_KEY: ""
+      networks:
+        - trino-network        
 
-    # trino-coordinator:
-    #   image: trinodb/trino:latest
-    #   container_name: trino
-    #   depends_on:
-    #     - hive-metastore
-    #   ports:
-    #     - "18080:8080"
-    #   volumes:
-    #     - ./etc/trino/catalog:/etc/trino/catalog
-    #   networks:
-    #     - trino-network
+    trino-coordinator:
+      image: trinodb/trino:latest
+      container_name: trino
+      depends_on:
+        - hive-metastore
+      ports:
+        - "18080:8080"
+      volumes:
+        - ./etc/trino/catalog:/etc/trino/catalog
+      networks:
+        - trino-network
 
-    # redis:
-    #   image: redis:latest
-    #   container_name: superset_redis
-    #   restart: unless-stopped
-    #   volumes:
-    #     - ./data/redis_data:/data
-    #   networks:
-    #     - trino-network
+    redis:
+      image: redis:latest
+      container_name: superset_redis
+      restart: unless-stopped
+      volumes:
+        - ./data/redis_data:/data
+      networks:
+        - trino-network
         
-    # superset:
-    #   image: apache/superset:2.1.0  # Фиксируем версию
-    #   container_name: superset_app
-    #   restart: unless-stopped
-    #   ports:
-    #     - "8088:8088"
-    #   environment:
-    #     - SUPERSET_SECRET_KEY=your-secret-key-here  # Замените на реальный ключ
-    #     - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset    
-    #     - SUPERSET_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset    
-    #     - REDIS_HOST=redis
-    #     - REDIS_PORT=6379
-    #     - CELERY_BROKER_URL=redis://redis:6379/0
-    #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    #     - SUPERSET_ENV=prod
-    #     - PYTHONPATH=/app/pythonpath
-    #     - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
-    #   volumes:
-    #     - ./data/superset_data:/app/superset_home
-    #     - ./etc/superset/superset_config.py:/app/pythonpath/superset_config.py
-    #   depends_on:
-    #     postgres:
-    #       condition: service_healthy
-    #     redis:
-    #       condition: service_started
-    #   networks:
-    #     - trino-network
+    superset:
+      image: apache/superset:2.1.0  # Фиксируем версию
+      container_name: superset_app
+      restart: unless-stopped
+      ports:
+        - "8088:8088"
+      environment:
+        - SUPERSET_SECRET_KEY=your-secret-key-here  # Замените на реальный ключ
+        - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset    
+        - SUPERSET_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset    
+        - REDIS_HOST=redis
+        - REDIS_PORT=6379
+        - CELERY_BROKER_URL=redis://redis:6379/0
+        - CELERY_RESULT_BACKEND=redis://redis:6379/0
+        - SUPERSET_ENV=prod
+        - PYTHONPATH=/app/pythonpath
+        - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
+      volumes:
+        - ./data/superset_data:/app/superset_home
+        - ./etc/superset/superset_config.py:/app/pythonpath/superset_config.py
+      depends_on:
+        postgres:
+          condition: service_healthy
+        redis:
+          condition: service_started
+      networks:
+        - trino-network
 
-    # superset-worker:
-    #   image: apache/superset:2.1.0
-    #   container_name: superset_worker
-    #   restart: unless-stopped
-    #   environment:
-    #     - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset
-    #     - SUPERSET_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset
-    #     - SUPERSET_SECRET_KEY=your-secret-key-here
-    #     - CELERY_BROKER_URL=redis://redis:6379/0
-    #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    #     - FLASK_ENV=production
-    #     - CELERYD_LOG_LEVEL=INFO
-    #     - C_FORCE_ROOT=true
-    #     - BROKER_CONNECTION_RETRY_ON_STARTUP=true
-    #     - PYTHONPATH=/app/pythonpath
-    #     - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py        
-    #   volumes:
-    #     - ./data/superset_data:/app/superset_home
-    #     - ./etc/superset/superset_config.py:/app/pythonpath/superset_config.py
-    #   depends_on:
-    #     - superset
-    #   networks:
-    #     - trino-network
-    #   command: ["celery", "--app=superset.tasks.celery_app:app", "worker", "--pool=prefork", "-O", "fair", "-c", "4"]
+    superset-worker:
+      image: apache/superset:2.1.0
+      container_name: superset_worker
+      restart: unless-stopped
+      environment:
+        - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset
+        - SUPERSET_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset
+        - SUPERSET_SECRET_KEY=your-secret-key-here
+        - CELERY_BROKER_URL=redis://redis:6379/0
+        - CELERY_RESULT_BACKEND=redis://redis:6379/0
+        - FLASK_ENV=production
+        - CELERYD_LOG_LEVEL=INFO
+        - C_FORCE_ROOT=true
+        - BROKER_CONNECTION_RETRY_ON_STARTUP=true
+        - PYTHONPATH=/app/pythonpath
+        - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py        
+      volumes:
+        - ./data/superset_data:/app/superset_home
+        - ./etc/superset/superset_config.py:/app/pythonpath/superset_config.py
+      depends_on:
+        - superset
+      networks:
+        - trino-network
+      command: ["celery", "--app=superset.tasks.celery_app:app", "worker", "--pool=prefork", "-O", "fair", "-c", "4"]
 
     mongodb:
       image: "mongo:6.0.18"
@@ -293,8 +293,89 @@ services:
         - ./logs/project:/var/log/project
       depends_on:
         - kafka
+      networks:
+        - trino-network
 
-      
+    # auth_service:
+    #   build:
+    #     context: ./services/auth
+    #     dockerfile: ./Dockerfile
+    #   container_name: auth_service
+    #   hostname: auth_service
+    #   restart: always
+    #   volumes:
+    #     - ./logs/project/auth:/tmp/logs/
+    #   depends_on:
+    #     kafka:
+    #       condition: service_healthy
+    #   networks:
+    #     - trino-network
+    
+    # products_service:
+    #   build:
+    #     context: ./services/products
+    #     dockerfile: ./Dockerfile
+    #   container_name: products_service
+    #   hostname: products_service
+    #   restart: always
+    #   volumes:
+    #     - ./logs/project/products:/tmp/logs/
+    #   depends_on:
+    #     kafka:
+    #       condition: service_healthy
+    #   networks:
+    #     - trino-network
+
+    finance_service:
+      build:
+        context: ./services/service_finance
+        dockerfile: ./Dockerfile
+      container_name: finance_service
+      hostname: finance_service
+      restart: always
+      volumes:
+        - ./logs/project/finance:/tmp/logs/
+      ports:
+        - 8003:8003
+      depends_on:
+        kafka:
+          condition: service_healthy
+      networks:
+        - trino-network
+
+    orders_service:
+      build:
+        context: ./services/service_orders
+        dockerfile: ./Dockerfile
+      container_name: orders_service
+      hostname: orders_service
+      restart: always
+      ports:
+        - 8002:8002
+      volumes:
+        - ./logs/project/orders:/tmp/logs/
+      depends_on:
+        kafka:
+          condition: service_healthy
+      networks:
+        - trino-network
+
+    personal_account_service:
+      build:
+        context: ./services/service_personal_account
+        dockerfile: ./Dockerfile
+      container_name: personal_account_service
+      hostname: personal_account_service
+      restart: always
+      volumes:
+        - ./logs/project/personal_account:/tmp/logs/
+      depends_on:
+        kafka:
+          condition: service_healthy
+      networks:
+        - trino-network
+      ports:
+        - 8001:8001
 
 networks:
   trino-network:
